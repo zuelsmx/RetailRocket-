@@ -6,9 +6,14 @@ data/processed/*
 models/
 reports/*.csv
 reports/*.json
-reports/project_report.md
+!reports/data_summary.json
+!reports/funnel_metrics.csv
+!reports/model_metrics.csv
+!reports/category_segments.csv
+!reports/project_report.md
 reports/figures/*
 !reports/figures/.gitkeep
+!reports/figures/*.png
 
 __pycache__/
 *.py[cod]

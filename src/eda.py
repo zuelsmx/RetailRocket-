@@ -91,6 +91,29 @@ def compute_segments(events: pd.DataFrame) -> dict[str, pd.DataFrame]:
     }
 
 
+def compute_category_segments(events: pd.DataFrame, item_categories: pd.DataFrame) -> pd.DataFrame:
+    if item_categories.empty:
+        return pd.DataFrame()
+    merged = events.merge(item_categories[["itemid", "categoryid"]], on="itemid", how="inner")
+    if merged.empty:
+        return pd.DataFrame()
+    category = merged.groupby("categoryid").agg(
+        category_events=("event", "size"),
+        category_items=("itemid", "nunique"),
+        category_users=("visitorid", "nunique"),
+        category_views=("event", lambda x: (x == "view").sum()),
+        category_addtocarts=("event", lambda x: (x == "addtocart").sum()),
+        category_transactions=("event", lambda x: (x == "transaction").sum()),
+    )
+    category["category_view_to_addtocart_rate"] = (
+        category["category_addtocarts"] / category["category_views"].replace(0, pd.NA)
+    )
+    category["category_view_to_transaction_rate"] = (
+        category["category_transactions"] / category["category_views"].replace(0, pd.NA)
+    )
+    return category.fillna(0).sort_values("category_events", ascending=False).reset_index()
+
+
 def save_eda_figures(events: pd.DataFrame, output_dir: Path = FIGURES_DIR) -> None:
     output_dir.mkdir(parents=True, exist_ok=True)
     sns.set_theme(style="whitegrid")

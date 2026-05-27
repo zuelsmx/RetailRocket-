@@ -1,0 +1,19 @@
+{
+  "rows": 2756101,
+  "visitors": 1407580,
+  "items": 235061,
+  "start_time": "2015-05-03 03:00:04.384000",
+  "end_time": "2015-09-18 02:59:47.788000",
+  "event_counts": {
+    "view": 2664312,
+    "addtocart": 69332,
+    "transaction": 22457
+  },
+  "purchase_rate_events": 0.008148104877143472,
+  "category_coverage": {
+    "event_items": 235061,
+    "items_with_category": 185246,
+    "item_category_coverage": 0.7880762865809301,
+    "unique_categories": 1180
+  }
+}

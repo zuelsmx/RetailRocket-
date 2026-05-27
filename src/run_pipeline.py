@@ -13,8 +13,8 @@ from .config import (
     PROCESSED_DATA_DIR,
     REPORTS_DIR,
 )
-from .data import load_events, summarize_events
-from .eda import compute_funnel, compute_segments, save_eda_figures
+from .data import load_events, load_item_categories, summarize_category_coverage, summarize_events
+from .eda import compute_category_segments, compute_funnel, compute_segments, save_eda_figures
 from .explain import save_shap_summary
 from .features import WindowConfig, build_rolling_dataset, temporal_train_valid_test_split
 from .model import (
@@ -34,8 +34,11 @@ def run_pipeline(history_days: int = DEFAULT_HISTORY_DAYS, label_days: int = DEF
 
     events = load_events()
     summary = summarize_events(events)
+    item_categories = load_item_categories()
+    category_coverage = summarize_category_coverage(events, item_categories)
     (REPORTS_DIR / "data_summary.json").write_text(
-        json.dumps(summary, ensure_ascii=False, indent=2), encoding="utf-8"
+        json.dumps({**summary, "category_coverage": category_coverage}, ensure_ascii=False, indent=2),
+        encoding="utf-8",
     )
 
     funnel = compute_funnel(events)
@@ -44,6 +47,9 @@ def run_pipeline(history_days: int = DEFAULT_HISTORY_DAYS, label_days: int = DEF
     segments = compute_segments(events)
     for name, frame in segments.items():
         frame.to_csv(REPORTS_DIR / f"{name}.csv", index=False, encoding="utf-8-sig")
+    category_segments = compute_category_segments(events, item_categories)
+    if not category_segments.empty:
+        category_segments.to_csv(REPORTS_DIR / "category_segments.csv", index=False, encoding="utf-8-sig")
 
     save_eda_figures(events)
 
@@ -60,17 +66,19 @@ def run_pipeline(history_days: int = DEFAULT_HISTORY_DAYS, label_days: int = DEF
 
     best_name, best_model = select_best_model(models, metrics)
     save_feature_importance(best_model, feature_columns(test))
-    shap_saved = save_shap_summary(best_model, test)
+    shap_model = models.get("lightgbm", best_model)
+    shap_saved = save_shap_summary(shap_model, test)
 
     scored = score_top_intent_samples(best_model, test)
     scored.to_csv(REPORTS_DIR / "top_intent_users.csv", index=False, encoding="utf-8-sig")
 
-    report = build_markdown_report(summary, funnel, metrics, best_name, shap_saved)
+    report = build_markdown_report(summary, category_coverage, funnel, metrics, best_name, shap_saved)
     (REPORTS_DIR / "project_report.md").write_text(report, encoding="utf-8")
 
 
 def build_markdown_report(
     summary: dict[str, object],
+    category_coverage: dict[str, object],
     funnel: pd.DataFrame,
     metrics: pd.DataFrame,
     best_name: str,
@@ -86,6 +94,8 @@ def build_markdown_report(
 - 商品数：{summary["items"]}
 - 时间范围：{summary["start_time"]} 至 {summary["end_time"]}
 - 事件分布：{summary["event_counts"]}
+- 商品类目覆盖率：{category_coverage["item_category_coverage"]:.2%}
+- 可用类目数：{category_coverage["unique_categories"]}
 
 ## 漏斗指标
 - 浏览到加购转化率：{funnel_row["view_to_addtocart_rate"]:.4f}
@@ -101,7 +111,7 @@ def build_markdown_report(
 
 ## 模型解释
 - 特征重要性图：`reports/figures/feature_importance.png`
-- SHAP summary：{"已生成" if shap_saved else "未生成，通常是因为未安装 shap 或当前主模型不兼容"}
+- SHAP summary：{"已生成，基于 LightGBM 模型解释" if shap_saved else "未生成，通常是因为未安装 shap 或当前模型不兼容"}
 
 ## 增长策略
 - 对 Top 10% 高意向未购买用户进行加购提醒或召回。

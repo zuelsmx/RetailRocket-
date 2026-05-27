@@ -126,10 +126,8 @@ def topk_recall(y_true: pd.Series, scores: np.ndarray, k: float) -> float:
 
 
 def select_best_model(models: dict[str, object], metrics: pd.DataFrame) -> tuple[str, object]:
-    test_metrics = metrics[metrics["split"] == "test"].copy()
-    if "lightgbm" in models:
-        return "lightgbm", models["lightgbm"]
-    best_name = test_metrics.sort_values(["pr_auc", "auc"], ascending=False).iloc[0]["model"]
+    valid_metrics = metrics[metrics["split"] == "valid"].copy()
+    best_name = valid_metrics.sort_values(["pr_auc", "auc"], ascending=False).iloc[0]["model"]
     return str(best_name), models[str(best_name)]
 
 
@@ -160,7 +158,7 @@ def save_feature_importance(model: object, columns: list[str], output_dir: Path 
     plt.close(fig)
 
 
-def score_top_intent_samples(model: object, test: pd.DataFrame) -> pd.DataFrame:
+def score_top_intent_samples(model: object, test: pd.DataFrame, keep_top_pct: float = 0.20) -> pd.DataFrame:
     scored = test[["visitorid", "itemid", "label", "label_start", "label_end"]].copy()
     scored["score"] = predict_scores(model, test[feature_columns(test)])
     scored["score_rank_pct"] = scored["score"].rank(pct=True, ascending=False)
@@ -169,4 +167,5 @@ def score_top_intent_samples(model: object, test: pd.DataFrame) -> pd.DataFrame:
         ["top_10pct", "top_20pct"],
         default="other",
     )
+    scored = scored[scored["score_rank_pct"] <= keep_top_pct]
     return scored.sort_values("score", ascending=False)

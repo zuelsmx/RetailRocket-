@@ -21,11 +21,12 @@
 
 ```text
 data/raw/events.csv
-data/raw/item_properties.csv
+data/raw/item_properties_part1.csv
+data/raw/item_properties_part2.csv
 data/raw/category_tree.csv
 ```
 
-当前主流程只强依赖 `events.csv`。`item_properties.csv` 和 `category_tree.csv` 可用于后续扩展商品类目分析，但不能默认每个商品都有完整清晰类目。
+当前主流程只强依赖 `events.csv`。`item_properties_part1.csv`、`item_properties_part2.csv` 和 `category_tree.csv` 用于可用商品类目分析，但不能默认每个商品都有完整清晰类目。
 
 原始数据和中间数据不会上传 GitHub。
 
@@ -112,10 +113,29 @@ python -m src.run_pipeline --history-days 21 --label-days 7
 - `reports/funnel_metrics.csv`：漏斗指标
 - `reports/user_segments.csv`：用户活跃与购买分层
 - `reports/item_segments.csv`：商品热度和转化分层
+- `reports/category_segments.csv`：可用商品类目的行为分层
 - `reports/model_metrics.csv`：模型评估指标
 - `reports/top_intent_users.csv`：Top 高意向用户-商品对
 - `reports/project_report.md`：项目报告
 - `reports/figures/*.png`：分析图表
+
+当前已在完整 RetailRocket `events.csv` 上完成一次复现，关键结果如下：
+
+- 事件量：2,756,101
+- 用户数：1,407,580
+- 商品数：235,061
+- 时间范围：2015-05-03 至 2015-09-18
+- 浏览到加购转化率：2.32%
+- 加购到购买转化率：30.71%
+- 浏览到购买转化率：0.89%
+- 21/7 滚动窗口样本正样本率约 0.022%
+- 测试集最佳模型：Random Forest
+- 测试集 AUC：0.9042
+- 测试集 PR-AUC：0.0100
+- 测试集 Top 10% Recall：0.7566
+- 测试集 Top 20% Recall：0.8464
+
+由于购买样本极度稀疏，本项目将 Top-K Recall 和 PR-AUC 作为更关键的业务评价指标，而不是 Accuracy。
 
 ## 模型方案
 

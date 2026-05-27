@@ -11,6 +11,10 @@ FIGURES_DIR = REPORTS_DIR / "figures"
 
 EVENTS_FILE = RAW_DATA_DIR / "events.csv"
 ITEM_PROPERTIES_FILE = RAW_DATA_DIR / "item_properties.csv"
+ITEM_PROPERTIES_PART_FILES = (
+    RAW_DATA_DIR / "item_properties_part1.csv",
+    RAW_DATA_DIR / "item_properties_part2.csv",
+)
 CATEGORY_TREE_FILE = RAW_DATA_DIR / "category_tree.csv"
 
 VALID_EVENTS = {"view", "addtocart", "transaction"}
