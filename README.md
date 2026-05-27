@@ -46,9 +46,6 @@ data/raw/category_tree.csv
 
 ```text
 .
-├── data/
-│   ├── raw/              # Kaggle 原始数据，本地保存，不上传
-│   └── processed/        # 训练样本和中间数据，本地保存，不上传
 ├── reports/
 │   └── figures/          # 漏斗、趋势、特征重要性、SHAP 图
 ├── sql/
@@ -62,6 +59,8 @@ data/raw/category_tree.csv
 │   └── run_pipeline.py   # 一键运行主流程
 └── tests/
 ```
+
+`data/raw/` 和 `data/processed/` 仅在本地运行时使用，不纳入仓库。
 
 ## 快速开始
 
@@ -83,14 +82,14 @@ python -m src.run_pipeline --history-days 21 --label-days 7
 pytest
 ```
 
-如果本地暂时没有 Kaggle 原始数据，可以先生成小型合成数据验证工程流程：
+如果只想验证工程流程，可以生成小型合成数据：
 
 ```bash
 python tests/create_sample_data.py
 python -m src.run_pipeline --history-days 21 --label-days 7
 ```
 
-注意：合成数据只用于工程校验，不能作为简历指标。
+合成数据只用于工程校验，不能作为项目结论或简历指标。
 
 ## 输出结果
 
@@ -98,11 +97,7 @@ python -m src.run_pipeline --history-days 21 --label-days 7
 
 - `reports/data_summary.json`：数据概览
 - `reports/funnel_metrics.csv`：漏斗指标
-- `reports/user_segments.csv`：用户活跃与购买分层
-- `reports/item_segments.csv`：商品热度和转化分层
-- `reports/category_segments.csv`：可用商品类目的行为分层
 - `reports/model_metrics.csv`：模型评估指标
-- `reports/top_intent_users.csv`：Top 高意向用户-商品对
 - `reports/project_report.md`：项目报告
 - `reports/figures/*.png`：分析图表
 
@@ -130,7 +125,9 @@ python -m src.run_pipeline --history-days 21 --label-days 7
 
 - Logistic Regression：可解释 baseline
 - Random Forest：非线性 baseline
-- LightGBM：主模型，若环境未安装会自动跳过
+- LightGBM：候选树模型，并用于 SHAP 解释；若环境未安装会自动跳过
+
+最终模型不按模型名称预设，而是根据验证集 PR-AUC 和排序召回表现选择。本次完整数据复现中，Random Forest 在验证集和测试集 PR-AUC 上表现最好。
 
 评价指标：
 
@@ -160,22 +157,3 @@ A/B Test 设计：
 - 对照组：保持原策略
 - 核心指标：购买转化率
 - 辅助指标：加购转化率、触达响应率、复购率
-
-## GitHub 交付
-
-推荐提交顺序：
-
-```bash
-git add .
-git commit -m "init project structure and data pipeline"
-git commit -m "add funnel analysis, purchase model, and report"
-git remote add origin <your-repo-url>
-git branch -M main
-git push -u origin main
-```
-
-推送前请确认：
-
-- `data/raw/` 不包含在 Git 提交中。
-- `data/processed/` 不包含在 Git 提交中。
-- 简历和 README 只写真实 RetailRocket 数据跑出的指标。

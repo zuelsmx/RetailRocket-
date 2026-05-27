@@ -1,7 +1,5 @@
 data/raw/*
 data/processed/*
-!data/raw/.gitkeep
-!data/processed/.gitkeep
 
 models/
 reports/*.csv
@@ -9,10 +7,8 @@ reports/*.json
 !reports/data_summary.json
 !reports/funnel_metrics.csv
 !reports/model_metrics.csv
-!reports/category_segments.csv
 !reports/project_report.md
 reports/figures/*
-!reports/figures/.gitkeep
 !reports/figures/*.png
 
 __pycache__/
